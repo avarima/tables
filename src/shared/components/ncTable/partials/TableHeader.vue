@@ -3,7 +3,10 @@
 		<th>
 			<NcCheckboxRadioSwitch :checked="allRowsAreSelected" @update:checked="value => $emit('select-all-rows', value)" />
 		</th>
-		<th v-for="col in columns" :key="col.id">
+		<th v-for="(col, index) in columns" :key="col.id" :draggable="true"
+			@dragstart="dragStart(index)"
+			@dragover="dragOver(index)"
+			@dragend="dragEnd(index)">
 			<div class="cell">
 				<div class="clickable" @click="updateOpenState(col.id)">
 					{{ col.title }}
@@ -78,6 +81,7 @@ import TableHeaderColumnOptions from './TableHeaderColumnOptions.vue'
 import searchAndFilterMixin from '../mixins/searchAndFilterMixin.js'
 import FilterLabel from './FilterLabel.vue'
 import permissionsMixin from '../mixins/permissionsMixin.js'
+import { showWarning } from '@nextcloud/dialogs'
 
 export default {
 
@@ -113,14 +117,16 @@ export default {
 			default: () => {},
 		},
 		view: {
-		      type: Object,
-		      default: null,
-		    },
+			type: Object,
+			default: null,
+		},
 	},
 
 	data() {
 		return {
 			openedColumnHeaderMenus: {},
+			draggedItem: null,
+			startDragIndex: null,
 		}
 	},
 
@@ -148,6 +154,35 @@ export default {
 		toggleShare() {
 			emit('tables:sidebar:sharing', { open: true, tab: 'sharing' })
 		},
+		dragStart(index) {
+			this.draggedItem = this.columns[index]
+			this.startDragIndex = index
+		},
+		dragOver(index) {
+			if (this.draggedItem === null) return
+			const draggedIndex = this.columns.indexOf(this.draggedItem)
+			if (index !== draggedIndex) {
+				this.columns.splice(draggedIndex, 1)
+				this.columns.splice(index, 0, this.draggedItem)
+			}
+		},
+		async dragEnd(goalIndex) {
+			if (this.draggedItem === null) return
+			const goal = goalIndex !== undefined ? goalIndex : this.list.indexOf(this.draggedItem)
+			if (this.startDragIndex === goal) return
+
+			for (let i = Math.min(this.startDragIndex, goal); i <= Math.max(this.startDragIndex, goal); i++) {
+				const column = this.columns[i]
+				column.orderWeight = this.columns.length - i - 1
+				const res = await this.$store.dispatch('updateColumn', { id: column.id, data: column })
+				if (!res) {
+					showWarning(t('tables', 'Could not reorder columns.'))
+				}
+			}
+
+			this.draggedItem = null
+			this.startDragIndex = null
+		},
 	},
 }
 </script>
@@ -156,6 +191,9 @@ export default {
 .cell {
 	display: inline-flex;
 	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	cursor: move;
 }
 
 .cell span {
@@ -179,4 +217,7 @@ export default {
 	cursor: pointer;
 }
 
+.droppable {
+  cursor: move;
+}
 </style>
