@@ -20,24 +20,29 @@
   -->
 
 <template>
-	<div v-if="richObject" class="tables-table">
-		<div class="tables-table--image">
-			<TablesIcon
-				:size="50" />
+	<div>
+		<div v-if="richObject" class="tables-table">
+			<div class="tables-table--image">
+				<TablesIcon
+					:size="50" />
+			</div>
+			<div class="tables-table--info">
+				<div class="line">
+					<strong>
+						<a :href="richObject.link" target="_blank">
+							{{ richObject.emoji + ' ' + richObject.title }}
+						</a>
+					</strong>
+				</div>
+				<div class="details">
+					<NcUserBubble :user="richObject.ownership"
+						:display-name="richObject.ownerDisplayName" />&nbsp;
+					<NcCounterBubble>{{ n('tables', '{nb} row', '{nb} rows', richObject.rowsCount, { nb: richObject.rowsCount}) }}</NcCounterBubble>
+				</div>
+			</div>
 		</div>
-		<div class="tables-table--info">
-			<div class="line">
-				<strong>
-					<a :href="richObject.link" target="_blank">
-						{{ richObject.emoji + ' ' + richObject.title }}
-					</a>
-				</strong>
-			</div>
-			<div class="details">
-				<NcUserBubble :user="richObject.ownership"
-					:display-name="richObject.ownerDisplayName" />&nbsp;
-				<NcCounterBubble>{{ n('tables', '{nb} row', '{nb} rows', richObject.rowsCount, { nb: richObject.rowsCount}) }}</NcCounterBubble>
-			</div>
+		<div v-if="richObject.table">
+			<NcTable :table="richObject.table" :columns="richObject.columns" :rows="richObject.rows" />
 		</div>
 	</div>
 </template>
@@ -45,6 +50,7 @@
 <script>
 import TablesIcon from '../icons/TablesIcon.vue'
 import { NcUserBubble, NcCounterBubble } from '@nextcloud/vue'
+import NcTable from '../shared/components/ncTable/NcTable.vue'
 
 export default {
 	name: 'TableReferenceWidget',
@@ -53,6 +59,7 @@ export default {
 		TablesIcon,
 		NcUserBubble,
 		NcCounterBubble,
+		NcTable,
 	},
 
 	props: {
@@ -74,6 +81,10 @@ export default {
 		emoji() {
 			return this.richObject.emoji
 		},
+	},
+
+	mounted() {
+		console.debug('table for widget', this.richObject.table)
 	},
 }
 </script>

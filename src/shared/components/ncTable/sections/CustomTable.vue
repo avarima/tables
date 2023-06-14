@@ -108,7 +108,7 @@ export default {
 
 		getSearchedAndFilteredAndSortedRows() {
 			// if we have to sort
-			if (this.view.sorting) {
+			if (this.view?.sorting) {
 				const sortColumn = this.columns.find(item => item.id === this.view.sorting[0].columnId)
 				const sortMethodName = 'sorting' + this.ucfirst(sortColumn.type) + this.ucfirst(sortColumn.subtype)
 				if (!(this[sortMethodName] instanceof Function)) {

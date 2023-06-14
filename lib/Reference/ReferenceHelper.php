@@ -5,6 +5,11 @@ namespace OCA\Tables\Reference;
 use Exception;
 use OC\Collaboration\Reference\LinkReferenceProvider;
 use OCA\Tables\AppInfo\Application;
+use OCA\Tables\Errors\InternalError;
+use OCA\Tables\Errors\NotFoundError;
+use OCA\Tables\Errors\PermissionError;
+use OCA\Tables\Service\ColumnService;
+use OCA\Tables\Service\RowService;
 use OCA\Tables\Service\TableService;
 use OCP\Collaboration\Reference\IReference;
 use OCP\Collaboration\Reference\Reference;
@@ -19,11 +24,15 @@ class ReferenceHelper {
 	private IURLGenerator $urlGenerator;
 	private LinkReferenceProvider $linkReferenceProvider;
 	private TableService $tableService;
+	private RowService $rowService;
+	private ColumnService $columnService;
 
 	private IConfig $config;
 
 	public function __construct(IURLGenerator $urlGenerator,
 		TableService $tableService,
+		RowService $rowService,
+		ColumnService $columnService,
 		LinkReferenceProvider $linkReferenceProvider,
 		?string $userId,
 		IConfig $config) {
@@ -31,6 +40,8 @@ class ReferenceHelper {
 		$this->urlGenerator = $urlGenerator;
 		$this->linkReferenceProvider = $linkReferenceProvider;
 		$this->tableService = $tableService;
+		$this->rowService = $rowService;
+		$this->columnService = $columnService;
 		$this->config = $config;
 	}
 
@@ -91,6 +102,13 @@ class ReferenceHelper {
 
 			$tableReferenceInfo['link'] = $referenceText;
 			$reference->setUrl($referenceText);
+
+			try {
+				$tableReferenceInfo['table'] = $this->tableService->find($tableId);
+				$tableReferenceInfo['rows'] = $this->rowService->findAllByTable($tableId, 10, 0);
+				$tableReferenceInfo['columns'] = $this->columnService->findAllByTable($tableId);
+			} catch (InternalError|NotFoundError|PermissionError $e) {
+			}
 
 			$reference->setRichObject(
 				$this::RICH_OBJECT_TYPE,
