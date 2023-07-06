@@ -15,6 +15,6 @@ describe('The Home Page', () => {
 
 	it('successfully loads', () => {
 		cy.get('.empty-content').contains('Manage data the way you need it.').should('be.visible')
-		cy.get('.empty-content__action button').contains('Create new table').should('be.visible')
+		cy.get('.empty-content__action button').contains('Mike').should('be.visible')
 	})
 })
